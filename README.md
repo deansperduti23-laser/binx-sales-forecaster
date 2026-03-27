@@ -19,3 +19,6 @@ This is a static GitHub Pages version of the dashboard prototype.
 - The BINX logo is represented by a text badge, not the official asset.
 - The dashboard assumptions are editable using the controls tab.
 - For production use, add branding assets, authentication, persistent data storage, and real API connections.
+
+## AI USAGE
+Warning : Website was made with AI assistance.
