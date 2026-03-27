@@ -485,14 +485,42 @@
     }
 
     .range-row { display: grid; grid-template-columns: 1fr auto; gap: 12px; align-items: center; margin-top: 10px; }
-    .range-row input[type="range"] {
+    .styled-slider {
+      -webkit-appearance: none;
+      appearance: none;
       width: 100%;
-      accent-color: #0071e3;
+      height: 8px;
+      border-radius: 999px;
+      outline: none;
+      margin: 12px 0;
       cursor: pointer;
-      transition: filter 0.2s ease;
+      box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);
     }
-    .range-row input[type="range"]:hover {
-      filter: brightness(1.1);
+    .styled-slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: #ffffff;
+      border: 3px solid #0071e3;
+      box-shadow: 0 3px 8px rgba(0,0,0,0.15);
+      cursor: grab;
+      transition: transform 0.1s;
+    }
+    .styled-slider:active::-webkit-slider-thumb {
+      cursor: grabbing;
+      transform: scale(1.1);
+    }
+    .styled-slider::-moz-range-thumb {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: #ffffff;
+      border: 3px solid #0071e3;
+      box-shadow: 0 3px 8px rgba(0,0,0,0.15);
+      cursor: grab;
+      transition: transform 0.1s;
     }
     .range-row span { color: var(--muted); min-width: 62px; text-align: right; font-variant-numeric: tabular-nums; }
 
@@ -691,32 +719,38 @@
         </div>
       );
 
-      const Control = ({ label, value, min, max, step = 1, setter, suffix = "" }) => (
-        <div className="control-block">
-          <div className="control-header">
-            <label>{label}</label>
-            <input
-              type="number"
-              value={value}
-              min={min}
-              max={max}
-              step={step}
-              onChange={(e) => setter(Number(e.target.value))}
-            />
+      const Control = ({ label, value, min, max, step = 1, setter, suffix = "" }) => {
+        const percent = Math.max(0, Math.min(100, ((value - min) / (max - min)) * 100));
+        return (
+          <div className="control-block">
+            <div className="control-header">
+              <label>{label}</label>
+              <input
+                type="number"
+                value={value}
+                min={min}
+                max={max}
+                step={step}
+                onChange={(e) => setter(Number(e.target.value))}
+              />
+            </div>
+            <div className="range-row">
+              <input
+                type="range"
+                className="styled-slider"
+                value={value}
+                min={min}
+                max={max}
+                step={step}
+                style={{ background: `linear-gradient(to right, #0071e3 ${percent}%, #e9eff2 ${percent}%)` }}
+                onInput={(e) => setter(Number(e.target.value))}
+                onChange={(e) => setter(Number(e.target.value))}
+              />
+              <span>{value}{suffix}</span>
+            </div>
           </div>
-          <div className="range-row">
-            <input
-              type="range"
-              value={value}
-              min={min}
-              max={max}
-              step={step}
-              onChange={(e) => setter(Number(e.target.value))}
-            />
-            <span>{value}{suffix}</span>
-          </div>
-        </div>
-      );
+        );
+      };
 
       const renderExecutive = () => (
         <>
