@@ -629,6 +629,47 @@
       return Math.min(Math.max(value, min), max);
     }
 
+    const Card = ({ title, value, subtext }) => (
+      <div className="card metric-card">
+        <div className="metric-label">{title}</div>
+        <div className="metric-value">{value}</div>
+        <div className="metric-subtext">{subtext}</div>
+      </div>
+    );
+
+    const Control = ({ label, value, min, max, step = 1, setter, suffix = "" }) => {
+      const percent = Math.max(0, Math.min(100, ((value - min) / (max - min)) * 100));
+      return (
+        <div className="control-block">
+          <div className="control-header">
+            <label>{label}</label>
+            <input
+              type="number"
+              value={value}
+              min={min}
+              max={max}
+              step={step}
+              onChange={(e) => setter(Number(e.target.value))}
+            />
+          </div>
+          <div className="range-row">
+            <input
+              type="range"
+              className="styled-slider"
+              value={value}
+              min={min}
+              max={max}
+              step={step}
+              style={{ background: `linear-gradient(to right, #0a2540 ${percent}%, #e9eff2 ${percent}%)` }}
+              onInput={(e) => setter(Number(e.target.value))}
+              onChange={(e) => setter(Number(e.target.value))}
+            />
+            <span>{value}{suffix}</span>
+          </div>
+        </div>
+      );
+    };
+
     function App() {
       const [accountsInUniverse, setAccountsInUniverse] = useState(2400);
       const [accountsCalled, setAccountsCalled] = useState(620);
@@ -710,47 +751,6 @@
       ];
 
       const maxActivity = Math.max(...activityData.map((item) => item.value), 1);
-
-      const Card = ({ title, value, subtext }) => (
-        <div className="card metric-card">
-          <div className="metric-label">{title}</div>
-          <div className="metric-value">{value}</div>
-          <div className="metric-subtext">{subtext}</div>
-        </div>
-      );
-
-      const Control = ({ label, value, min, max, step = 1, setter, suffix = "" }) => {
-        const percent = Math.max(0, Math.min(100, ((value - min) / (max - min)) * 100));
-        return (
-          <div className="control-block">
-            <div className="control-header">
-              <label>{label}</label>
-              <input
-                type="number"
-                value={value}
-                min={min}
-                max={max}
-                step={step}
-                onChange={(e) => setter(Number(e.target.value))}
-              />
-            </div>
-            <div className="range-row">
-              <input
-                type="range"
-                className="styled-slider"
-                value={value}
-                min={min}
-                max={max}
-                step={step}
-                style={{ background: `linear-gradient(to right, #0a2540 ${percent}%, #e9eff2 ${percent}%)` }}
-                onInput={(e) => setter(Number(e.target.value))}
-                onChange={(e) => setter(Number(e.target.value))}
-              />
-              <span>{value}{suffix}</span>
-            </div>
-          </div>
-        );
-      };
 
       const renderExecutive = () => (
         <>
