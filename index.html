@@ -1,0 +1,535 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>binx Revenue Command Center</title>
+  <meta name="description" content="Static GitHub Pages dashboard prototype for binx pipeline and revenue forecasting." />
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <style>
+    :root {
+      --bg: #f5f8f9;
+      --card: rgba(255,255,255,0.92);
+      --border: rgba(15,23,42,0.08);
+      --text: #0f172a;
+      --muted: #64748b;
+      --teal: #0f766e;
+      --teal-soft: #dff7f4;
+      --blue: #2563eb;
+      --slate: #111827;
+      --shadow: 0 12px 40px rgba(15, 23, 42, 0.08);
+      --radius-xl: 32px;
+      --radius-lg: 24px;
+      --radius-md: 18px;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background:
+        radial-gradient(circle at top left, rgba(15,118,110,0.10), transparent 24%),
+        radial-gradient(circle at top right, rgba(37,99,235,0.08), transparent 26%),
+        linear-gradient(180deg, #f8fbfc 0%, #f2f6f7 100%);
+      color: var(--text);
+    }
+    .app-shell { min-height: 100vh; padding: 32px 20px 56px; }
+    .container { max-width: 1280px; margin: 0 auto; }
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-xl);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(12px);
+    }
+    .hero {
+      padding: 36px;
+      display: grid;
+      gap: 24px;
+      grid-template-columns: 1.4fr 0.8fr;
+      align-items: end;
+      overflow: hidden;
+    }
+    .brand-row, .chip-row, .tabs-row, .legend { display: flex; flex-wrap: wrap; gap: 10px; }
+    .brand-badge {
+      background: #111827;
+      color: #fff;
+      padding: 10px 14px;
+      border-radius: 18px;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+      text-transform: lowercase;
+    }
+    .status-badge, .chip, .tab {
+      border-radius: 999px;
+      padding: 10px 14px;
+      font-size: 14px;
+      border: 1px solid rgba(15,118,110,0.12);
+      background: #fff;
+      color: var(--text);
+    }
+    .status-badge { background: var(--teal); color: #fff; border-color: transparent; }
+    .hero h1 { margin: 16px 0 10px; font-size: clamp(34px, 5vw, 56px); line-height: 0.98; letter-spacing: -0.04em; }
+    .hero p { margin: 0; color: var(--muted); font-size: 18px; line-height: 1.6; max-width: 760px; }
+    .hero-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    .hero-stat {
+      background: rgba(255,255,255,0.9);
+      border: 1px solid rgba(255,255,255,0.8);
+      border-radius: 28px;
+      padding: 18px;
+    }
+    .hero-stat span { display:block; color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: 0.16em; }
+    .hero-stat strong { display:block; margin-top: 8px; font-size: 30px; letter-spacing: -0.03em; }
+    .metric-grid, .panel-grid { display: grid; gap: 18px; margin-top: 18px; }
+    .metric-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    .metric-card { padding: 24px; }
+    .metric-label { color: var(--muted); font-size: 14px; }
+    .metric-value { font-size: clamp(28px, 3vw, 42px); letter-spacing: -0.04em; margin-top: 10px; font-weight: 700; }
+    .metric-subtext { color: var(--muted); margin-top: 10px; font-size: 14px; line-height: 1.5; }
+    .tabs-row { margin-top: 18px; padding: 8px; border-radius: 20px; background: rgba(15,23,42,0.05); }
+    .tab { cursor: pointer; background: transparent; }
+    .tab.active { background: #fff; box-shadow: 0 6px 20px rgba(15,23,42,0.08); }
+    .two-up { grid-template-columns: 1.2fr 0.8fr; }
+    .three-up { grid-template-columns: repeat(3, minmax(0,1fr)); }
+    .forecast-layout { grid-template-columns: 0.9fr 1.1fr; }
+    .card .section-title { font-size: 24px; font-weight: 700; letter-spacing: -0.03em; margin-bottom: 18px; }
+    .card { padding: 24px; }
+    .progress-header { display: flex; justify-content: space-between; gap: 12px; color: var(--muted); font-size: 14px; }
+    .progress-track { margin-top: 14px; background: #e9eff2; height: 18px; border-radius: 999px; overflow: hidden; }
+    .progress-fill { height: 100%; border-radius: inherit; background: linear-gradient(90deg, var(--teal), #14b8a6); }
+    .mini-grid { display: grid; gap: 14px; margin-top: 18px; }
+    .mini-card { background: #f8fafc; border-radius: var(--radius-md); padding: 16px; }
+    .mini-card.accent { background: var(--teal-soft); }
+    .mini-card.subtle { background: #eef2f7; }
+    .mini-label { color: var(--muted); font-size: 13px; }
+    .mini-value { font-size: 28px; font-weight: 700; letter-spacing: -0.03em; margin-top: 8px; }
+    .list-item {
+      display: flex; justify-content: space-between; align-items: center;
+      gap: 14px; padding: 18px; border-radius: 18px; background: #f8fafc; margin-top: 12px;
+    }
+    .list-item span { color: var(--muted); }
+    .list-item strong { font-size: 24px; letter-spacing: -0.03em; }
+    .line-chart, .area-chart {
+      height: 300px; display: grid; grid-template-columns: repeat(6, minmax(0,1fr)); gap: 12px; align-items: end;
+    }
+    .line-column, .area-column { display: flex; flex-direction: column; justify-content: end; align-items: center; gap: 10px; height: 100%; }
+    .line-bars { height: 230px; display: flex; align-items: end; gap: 6px; }
+    .line-bar { width: 16px; border-radius: 12px 12px 0 0; min-height: 8px; }
+    .line-bar.teal, .swatch.teal { background: #14b8a6; }
+    .line-bar.blue, .swatch.blue { background: #2563eb; }
+    .line-bar.dark, .swatch.dark { background: #111827; }
+    .area-stack { height: 230px; display: flex; align-items: end; gap: 0; }
+    .area-block { width: 28px; min-height: 8px; border-radius: 16px 16px 0 0; }
+    .area-block.light { background: linear-gradient(180deg, rgba(20,184,166,0.45), rgba(20,184,166,0.08)); border: 1px solid rgba(20,184,166,0.4); }
+    .area-block.dark { background: linear-gradient(180deg, rgba(17,24,39,0.35), rgba(17,24,39,0.1)); border: 1px solid rgba(17,24,39,0.25); margin-left: -14px; }
+    .chart-label { color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: 0.14em; }
+    .legend span { display: inline-flex; align-items: center; gap: 8px; color: var(--muted); font-size: 13px; }
+    .swatch { width: 12px; height: 12px; display: inline-block; border-radius: 999px; }
+    .bar-chart { margin-top: 10px; }
+    .bar-row { margin-top: 16px; }
+    .bar-meta { display: flex; justify-content: space-between; gap: 12px; margin-bottom: 8px; }
+    .bar-meta span { color: var(--muted); }
+    .bar-track { height: 14px; background: #e9eff2; border-radius: 999px; overflow: hidden; }
+    .bar-fill { height: 100%; background: linear-gradient(90deg, var(--teal), #14b8a6); border-radius: inherit; }
+    .info-box { background: #f8fafc; border-radius: 18px; padding: 18px; margin-top: 12px; }
+    .info-box strong { display: block; margin-bottom: 8px; }
+    .info-box p { margin: 0; color: var(--muted); line-height: 1.6; }
+    .control-block { margin-top: 16px; }
+    .control-header { display: flex; justify-content: space-between; gap: 14px; align-items: center; }
+    .control-header label { font-size: 14px; color: var(--text); }
+    .control-header input[type="number"] {
+      width: 120px; border-radius: 12px; border: 1px solid #d8e0e8; background: #fff; padding: 10px 12px; text-align: right;
+    }
+    .range-row { display: grid; grid-template-columns: 1fr auto; gap: 12px; align-items: center; margin-top: 10px; }
+    .range-row input[type="range"] { width: 100%; accent-color: var(--teal); }
+    .range-row span { color: var(--muted); min-width: 62px; text-align: right; }
+    .padded-top { padding-top: 10px; }
+    .naming-card { margin-top: 18px; display: grid; gap: 18px; }
+    .eyebrow { color: var(--muted); text-transform: uppercase; letter-spacing: 0.16em; font-size: 12px; }
+    .naming-card h2 { margin: 8px 0 0; font-size: 32px; line-height: 1.05; letter-spacing: -0.04em; }
+    .chip { background: #f8fafc; }
+    @media (max-width: 1080px) {
+      .hero, .metric-grid, .two-up, .forecast-layout, .three-up { grid-template-columns: 1fr; }
+      .hero-stats { grid-template-columns: 1fr 1fr; }
+    }
+    @media (max-width: 640px) {
+      .app-shell { padding: 18px 14px 32px; }
+      .hero, .card { padding: 18px; border-radius: 22px; }
+      .hero-stats { grid-template-columns: 1fr; }
+      .hero h1 { font-size: 34px; }
+      .metric-value, .mini-value, .list-item strong { font-size: 24px; }
+      .line-bars, .area-stack { height: 180px; }
+      .line-bar { width: 12px; }
+      .area-block { width: 20px; }
+    }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+  <script type="text/babel">
+    const { useMemo, useState } = React;
+
+    function formatNumber(value) {
+      return new Intl.NumberFormat("en-US").format(Math.round(value));
+    }
+
+    function formatCurrency(value) {
+      return new Intl.NumberFormat("en-US", {
+        style: "currency",
+        currency: "USD",
+        maximumFractionDigits: 0,
+      }).format(value);
+    }
+
+    function clamp(value, min, max) {
+      return Math.min(Math.max(value, min), max);
+    }
+
+    function App() {
+      const [accountsInUniverse, setAccountsInUniverse] = useState(2400);
+      const [accountsCalled, setAccountsCalled] = useState(620);
+      const [conversationsPerMonth, setConversationsPerMonth] = useState(200);
+      const [interestRate, setInterestRate] = useState(15);
+      const [closeRate, setCloseRate] = useState(30);
+      const [salesCycleDays, setSalesCycleDays] = useState(120);
+      const [avgRevenuePerClosedAccount, setAvgRevenuePerClosedAccount] = useState(38000);
+      const [currentPipelineValue, setCurrentPipelineValue] = useState(780000);
+      const [pipelineGoal, setPipelineGoal] = useState(1500000);
+      const [expectedRevenue, setExpectedRevenue] = useState(410000);
+      const [activeTab, setActiveTab] = useState("executive");
+
+      const metrics = useMemo(() => {
+        const safeUniverse = Math.max(accountsInUniverse, 1);
+        const safeCalled = clamp(accountsCalled, 0, safeUniverse);
+        const appointmentsPerMonth = conversationsPerMonth * (interestRate / 100);
+        const projectedWinsPerMonth = appointmentsPerMonth * (closeRate / 100);
+        const projectedRevenuePerMonth = projectedWinsPerMonth * avgRevenuePerClosedAccount;
+        const coverageRate = (safeCalled / safeUniverse) * 100;
+        const remainingAccounts = Math.max(safeUniverse - safeCalled, 0);
+        const pipelineGap = Math.max(pipelineGoal - currentPipelineValue, 0);
+        const monthsToRevenue = salesCycleDays / 30;
+        const futureRevenueAtCycle = projectedRevenuePerMonth * monthsToRevenue;
+        const futurePipelineCreated = appointmentsPerMonth * avgRevenuePerClosedAccount;
+        const currentVsGoal = pipelineGoal > 0 ? (currentPipelineValue / pipelineGoal) * 100 : 0;
+
+        return {
+          safeCalled,
+          appointmentsPerMonth,
+          projectedWinsPerMonth,
+          projectedRevenuePerMonth,
+          coverageRate,
+          remainingAccounts,
+          pipelineGap,
+          monthsToRevenue,
+          futureRevenueAtCycle,
+          futurePipelineCreated,
+          currentVsGoal,
+        };
+      }, [
+        accountsInUniverse,
+        accountsCalled,
+        conversationsPerMonth,
+        interestRate,
+        closeRate,
+        salesCycleDays,
+        avgRevenuePerClosedAccount,
+        currentPipelineValue,
+        pipelineGoal,
+      ]);
+
+      const trendData = useMemo(() => {
+        return Array.from({ length: 6 }, (_, idx) => {
+          const monthIndex = idx + 1;
+          const realizedMultiplier = monthIndex * 30 >= salesCycleDays ? monthIndex - Math.floor(salesCycleDays / 30) + 1 : 0;
+          return {
+            label: `M${monthIndex}`,
+            pipeline: currentPipelineValue + metrics.futurePipelineCreated * monthIndex,
+            expectedRevenue: expectedRevenue + metrics.projectedRevenuePerMonth * Math.max(0, monthIndex - 2),
+            realizedRevenue: Math.max(0, realizedMultiplier) * metrics.projectedRevenuePerMonth,
+          };
+        });
+      }, [currentPipelineValue, expectedRevenue, metrics, salesCycleDays]);
+
+      const maxTrend = useMemo(() => {
+        return Math.max(
+          ...trendData.flatMap((item) => [item.pipeline, item.expectedRevenue, item.realizedRevenue]),
+          1
+        );
+      }, [trendData]);
+
+      const activityData = [
+        { label: "Universe", value: accountsInUniverse },
+        { label: "Called", value: metrics.safeCalled },
+        { label: "Conversations", value: conversationsPerMonth },
+        { label: "Appointments", value: metrics.appointmentsPerMonth },
+        { label: "Wins", value: metrics.projectedWinsPerMonth },
+      ];
+
+      const maxActivity = Math.max(...activityData.map((item) => item.value), 1);
+
+      const Card = ({ title, value, subtext }) => (
+        <div className="card metric-card">
+          <div className="metric-label">{title}</div>
+          <div className="metric-value">{value}</div>
+          <div className="metric-subtext">{subtext}</div>
+        </div>
+      );
+
+      const Control = ({ label, value, min, max, step = 1, setter, suffix = "" }) => (
+        <div className="control-block">
+          <div className="control-header">
+            <label>{label}</label>
+            <input
+              type="number"
+              value={value}
+              min={min}
+              max={max}
+              step={step}
+              onChange={(e) => setter(Number(e.target.value))}
+            />
+          </div>
+          <div className="range-row">
+            <input
+              type="range"
+              value={value}
+              min={min}
+              max={max}
+              step={step}
+              onChange={(e) => setter(Number(e.target.value))}
+            />
+            <span>{value}{suffix}</span>
+          </div>
+        </div>
+      );
+
+      const renderExecutive = () => (
+        <>
+          <div className="panel-grid two-up">
+            <div className="card">
+              <div className="section-title">Current Pipeline vs Goal</div>
+              <div className="progress-header">
+                <span>{formatCurrency(currentPipelineValue)}</span>
+                <span>Goal {formatCurrency(pipelineGoal)}</span>
+              </div>
+              <div className="progress-track">
+                <div className="progress-fill" style={{ width: `${Math.min(metrics.currentVsGoal, 100)}%` }} />
+              </div>
+              <div className="mini-grid three-up">
+                <div className="mini-card">
+                  <div className="mini-label">Pipeline Gap</div>
+                  <div className="mini-value">{formatCurrency(metrics.pipelineGap)}</div>
+                </div>
+                <div className="mini-card">
+                  <div className="mini-label">Appointments / Month</div>
+                  <div className="mini-value">{formatNumber(metrics.appointmentsPerMonth)}</div>
+                </div>
+                <div className="mini-card">
+                  <div className="mini-label">Wins / Month</div>
+                  <div className="mini-value">{formatNumber(metrics.projectedWinsPerMonth)}</div>
+                </div>
+              </div>
+            </div>
+
+            <div className="card">
+              <div className="section-title">Activity Snapshot</div>
+              <div className="list-item"><span>Monthly Conversations</span><strong>{formatNumber(conversationsPerMonth)}</strong></div>
+              <div className="list-item"><span>Appointments from Interest %</span><strong>{formatNumber(metrics.appointmentsPerMonth)}</strong></div>
+              <div className="list-item"><span>Projected Monthly Revenue</span><strong>{formatCurrency(metrics.projectedRevenuePerMonth)}</strong></div>
+              <div className="list-item"><span>Untouched Accounts</span><strong>{formatNumber(metrics.remainingAccounts)}</strong></div>
+            </div>
+          </div>
+
+          <div className="panel-grid two-up">
+            <div className="card">
+              <div className="section-title">Pipeline and Revenue Trajectory</div>
+              <div className="line-chart">
+                {trendData.map((item) => (
+                  <div key={item.label} className="line-column">
+                    <div className="line-bars">
+                      <div className="line-bar teal" style={{ height: `${(item.pipeline / maxTrend) * 220}px` }} title={`Pipeline ${formatCurrency(item.pipeline)}`} />
+                      <div className="line-bar blue" style={{ height: `${(item.expectedRevenue / maxTrend) * 220}px` }} title={`Expected Revenue ${formatCurrency(item.expectedRevenue)}`} />
+                      <div className="line-bar dark" style={{ height: `${(item.realizedRevenue / maxTrend) * 220}px` }} title={`Realized Revenue ${formatCurrency(item.realizedRevenue)}`} />
+                    </div>
+                    <div className="chart-label">{item.label}</div>
+                  </div>
+                ))}
+              </div>
+              <div className="legend">
+                <span><i className="swatch teal" /> Current + Future Pipeline</span>
+                <span><i className="swatch blue" /> Expected Revenue</span>
+                <span><i className="swatch dark" /> Realized Revenue</span>
+              </div>
+            </div>
+
+            <div className="card">
+              <div className="section-title">Coverage and Conversion</div>
+              <div className="bar-chart">
+                {activityData.map((item) => (
+                  <div key={item.label} className="bar-row">
+                    <div className="bar-meta">
+                      <span>{item.label}</span>
+                      <strong>{formatNumber(item.value)}</strong>
+                    </div>
+                    <div className="bar-track">
+                      <div className="bar-fill" style={{ width: `${(item.value / maxActivity) * 100}%` }} />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </>
+      );
+
+      const renderForecast = () => (
+        <div className="panel-grid two-up forecast-layout">
+          <div className="card">
+            <div className="section-title">Forecast Logic</div>
+            <div className="info-box">
+              <strong>Input Drivers</strong>
+              <p>Universe size, accounts reached, monthly conversations, interest conversion, close rate, sales cycle, average revenue per closed account, current pipeline, goal, and expected revenue.</p>
+            </div>
+            <div className="info-box">
+              <strong>Dynamic Outputs</strong>
+              <p>Current pipeline vs goal, projected appointments, projected wins, projected revenue by cycle, market coverage, gap to goal, and six-month trajectory.</p>
+            </div>
+            <div className="info-box">
+              <strong>Fluid Scenario Modeling</strong>
+              <p>Any change to interest percent, close rate, cycle time, or revenue per close immediately recalculates the forecast so leadership sees where the team is headed in real time.</p>
+            </div>
+          </div>
+
+          <div className="card">
+            <div className="section-title">Six-Month Forecast Curve</div>
+            <div className="area-chart">
+              {trendData.map((item) => (
+                <div key={item.label} className="area-column">
+                  <div className="area-stack">
+                    <div className="area-block light" style={{ height: `${(item.pipeline / maxTrend) * 220}px` }} />
+                    <div className="area-block dark" style={{ height: `${(item.realizedRevenue / maxTrend) * 220}px` }} />
+                  </div>
+                  <div className="chart-label">{item.label}</div>
+                </div>
+              ))}
+            </div>
+            <div className="legend">
+              <span><i className="swatch teal" /> Pipeline</span>
+              <span><i className="swatch dark" /> Revenue Realized</span>
+            </div>
+          </div>
+        </div>
+      );
+
+      const renderControls = () => (
+        <div className="panel-grid two-up forecast-layout">
+          <div className="card">
+            <div className="section-title">Scenario Controls</div>
+            <Control label="Accounts in Universe" value={accountsInUniverse} min={100} max={10000} step={50} setter={setAccountsInUniverse} />
+            <Control label="Accounts Called" value={accountsCalled} min={0} max={10000} step={10} setter={setAccountsCalled} />
+            <Control label="Monthly Conversations" value={conversationsPerMonth} min={10} max={1000} step={5} setter={setConversationsPerMonth} />
+            <Control label="Interest to Appointment %" value={interestRate} min={1} max={50} step={1} setter={setInterestRate} suffix="%" />
+            <Control label="Close Rate %" value={closeRate} min={1} max={80} step={1} setter={setCloseRate} suffix="%" />
+            <Control label="Sales Cycle Days" value={salesCycleDays} min={30} max={240} step={5} setter={setSalesCycleDays} />
+          </div>
+
+          <div className="card">
+            <div className="section-title">Financial and Goal Drivers</div>
+            <Control label="Average Revenue per Closed Account" value={avgRevenuePerClosedAccount} min={1000} max={250000} step={1000} setter={setAvgRevenuePerClosedAccount} />
+            <Control label="Current Pipeline Value" value={currentPipelineValue} min={0} max={5000000} step={10000} setter={setCurrentPipelineValue} />
+            <Control label="Pipeline Goal" value={pipelineGoal} min={0} max={10000000} step={10000} setter={setPipelineGoal} />
+            <Control label="Expected Revenue" value={expectedRevenue} min={0} max={5000000} step={10000} setter={setExpectedRevenue} />
+
+            <div className="mini-grid two-up padded-top">
+              <div className="mini-card accent">
+                <div className="mini-label">Projected Appointments / Month</div>
+                <div className="mini-value">{formatNumber(metrics.appointmentsPerMonth)}</div>
+              </div>
+              <div className="mini-card subtle">
+                <div className="mini-label">Projected Revenue / Month</div>
+                <div className="mini-value">{formatCurrency(metrics.projectedRevenuePerMonth)}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      );
+
+      return (
+        <div className="app-shell">
+          <div className="container">
+            <header className="hero card">
+              <div className="hero-copy">
+                <div className="brand-row">
+                  <div className="brand-badge">binx</div>
+                  <div className="status-badge">Live Pipeline Intelligence</div>
+                </div>
+                <h1>binx Revenue Command Center</h1>
+                <p>
+                  A real-time executive dashboard for current pipeline, performance versus goal, market coverage, and forward revenue forecasting.
+                </p>
+              </div>
+              <div className="hero-stats">
+                <div className="hero-stat">
+                  <span>Sales Cycle</span>
+                  <strong>{salesCycleDays} days</strong>
+                </div>
+                <div className="hero-stat">
+                  <span>Close Rate</span>
+                  <strong>{closeRate}%</strong>
+                </div>
+              </div>
+            </header>
+
+            <section className="metric-grid">
+              <Card
+                title="Current Pipeline"
+                value={formatCurrency(currentPipelineValue)}
+                subtext={`${metrics.currentVsGoal.toFixed(1)}% of pipeline goal achieved`}
+              />
+              <Card
+                title="Expected Revenue"
+                value={formatCurrency(expectedRevenue)}
+                subtext="Based on current pipeline and close probability"
+              />
+              <Card
+                title="Projected Revenue at Cycle"
+                value={formatCurrency(metrics.futureRevenueAtCycle)}
+                subtext={`Expected by day ${salesCycleDays} if performance holds`}
+              />
+              <Card
+                title="Market Coverage"
+                value={`${metrics.coverageRate.toFixed(1)}%`}
+                subtext={`${formatNumber(metrics.remainingAccounts)} accounts not yet touched`}
+              />
+            </section>
+
+            <section className="tabs-row">
+              <button className={activeTab === "executive" ? "tab active" : "tab"} onClick={() => setActiveTab("executive")}>Executive View</button>
+              <button className={activeTab === "forecast" ? "tab active" : "tab"} onClick={() => setActiveTab("forecast")}>Forecast Engine</button>
+              <button className={activeTab === "controls" ? "tab active" : "tab"} onClick={() => setActiveTab("controls")}>Driver Controls</button>
+            </section>
+
+            {activeTab === "executive" && renderExecutive()}
+            {activeTab === "forecast" && renderForecast()}
+            {activeTab === "controls" && renderControls()}
+
+            <section className="card naming-card">
+              <div>
+                <div className="eyebrow">Recommended Naming Options</div>
+                <h2>Executive naming that feels strong and useful</h2>
+              </div>
+              <div className="chip-row">
+                <span className="chip">binx Revenue Command Center</span>
+                <span className="chip">binx Pipeline Intelligence Hub</span>
+                <span className="chip">binx Market Coverage & Forecast Engine</span>
+              </div>
+            </section>
+          </div>
+        </div>
+      );
+    }
+
+    ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+  </script>
+</body>
+</html>
